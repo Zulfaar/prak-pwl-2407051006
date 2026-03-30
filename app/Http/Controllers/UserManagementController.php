@@ -2,36 +2,47 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Kelas;
+use App\Models\UserModel;
 use Illuminate\Http\Request;
 
 class UserManagementController extends Controller
 {
+    public $userModel;
+    public $kelasModel;
+
+    public function __construct()
+    {
+        $this->userModel = new UserModel();
+        $this->kelasModel = new Kelas();
+    }
+
     public function index()
-{
-    $users = [
-         [
-            'nama' => 'zulfa',
-            'npm' => '2407051006',
-            'jurusan' => 'D3 Manajemen Informatika',
-            'prodi' => 'Ilmu Komputer'
-         ],
-         [
-            'nama' => 'Defina',
-            'npm' => '2407051001',
-            'jurusan' => 'D3 Manajemen Informatika',
-            'prodi' => 'Ilmu Komputer'
-         ],[
-            'nama' => 'Rosida',
-            'npm' => '2407051007',
-            'jurusan' => 'D3 Manajemen Informatika',
-            'prodi' => 'Ilmu Komputer'
-         ],[
-            'nama' => 'Adelia',
-            'npm' => '2407051012',
-            'jurusan' => 'D3 Manajemen Informatika',
-            'prodi' => 'Ilmu Komputer'
-         ],
-    ];     
-    return view ('user-management', compact('users'));
-}
+    {
+        $users = $this->userModel->getUser();
+        return view('user-management', compact('users'));
+    }
+
+    public function create()
+    {
+        $kelas = $this->kelasModel->getKelas();
+
+        $data = [
+            'judul' => 'Tambah User',
+            'kelas' => $kelas
+        ];
+
+        return view('user-management-create', $data);
+    }
+
+    public function store(Request $request)
+    {
+        $this->userModel->create([
+            'name' => $request->input('nama'),
+            'npm' => $request->input('npm'),
+            'kelas_id' => $request->input('kelas_id')
+        ]);
+
+        return redirect()->route('user-management.index');
+    }
 }

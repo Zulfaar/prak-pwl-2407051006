@@ -1,29 +1,29 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    <h1>User Management</h1>
-    <p>ini adalah halaman user management</p>
+@extends('layouts.app')
 
-    <table border="1" >
-        <tr>
-            <th>Nama</th>
-            <th>NPM</th>
-            <th>Jurusan</th>
-            <th>Prodi</th>
-        </tr>
-    @foreach ($users as $user)
-        <tr>
-            <td>{{ $user['nama'] }}</td>
-            <td>{{ $user['npm'] }}</td>
-            <td>{{ $user['jurusan'] }}</td>
-            <td>{{ $user['prodi'] }}</td>
-        </tr>
-    @endforeach
+@section('title', 'User Management')
+
+@section('content')
+    <h1 class="text-center">User Management</h1>
+    <p class="text-center">Ini adalah halaman user management</p>
+
+    <table class="table table-bordered text-center">
+        <thead class="table-primary">
+            <tr>
+                <th>ID</th>
+                <th>Nama</th>
+                <th>NPM</th>
+                <th>Kelas</th>
+            </tr>
+        </thead>
+        <tbody>
+           @foreach ($users as $user)
+<tr>
+    <td>{{ $user->id }}</td>
+    <td>{{ $user->name }}</td>
+    <td>{{ $user->npm }}</td>
+    <td>{{ $user->nama_kelas }}</td>
+</tr>
+@endforeach
+        </tbody>
     </table>
-</body>
-</html>
+@endsection
