@@ -18,14 +18,22 @@ class UserManagementController extends Controller
     }
 
     // READ
-    public function index()
-    {
-        $users = $this->userModel->getUser();
-        $kelas = $this->kelasModel->getKelas(); // penting untuk modal edit
+    public function index(Request $request)
+{
+    $search = $request->search;
 
-        return view('user-management', compact('users', 'kelas'));
-    }
+    $users = \App\Models\UserModel::join('kelas', 'kelas.id', '=', 'user.kelas_id')
+        ->when($search, function ($query) use ($search) {
+            $query->where('name', 'like', "%$search%")
+                  ->orWhere('npm', 'like', "%$search%");
+        })
+        ->select('user.*', 'kelas.nama_kelas')
+        ->paginate(5);
 
+    $kelas = \App\Models\Kelas::all();
+
+    return view('user-management', compact('users', 'kelas'));
+}
     
     public function create()
     {
