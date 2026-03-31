@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class UserModel extends Model
 {
@@ -11,10 +12,23 @@ class UserModel extends Model
 
     protected $table = 'user';
 
-    
     protected $fillable = ['name', 'npm', 'kelas_id'];
 
-    // Relasi ke tabel kelas
+    
+    public $incrementing = false;
+    protected $keyType = 'string';
+
+    
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            $model->id = (string) Str::uuid();
+        });
+    }
+
+    
     public function kelas()
     {
         return $this->belongsTo(Kelas::class, 'kelas_id');

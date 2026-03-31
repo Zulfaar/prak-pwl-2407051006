@@ -17,31 +17,65 @@ class UserManagementController extends Controller
         $this->kelasModel = new Kelas();
     }
 
+    // READ
     public function index()
     {
         $users = $this->userModel->getUser();
-        return view('user-management', compact('users'));
+        $kelas = $this->kelasModel->getKelas(); // penting untuk modal edit
+
+        return view('user-management', compact('users', 'kelas'));
     }
 
+    
     public function create()
     {
         $kelas = $this->kelasModel->getKelas();
-
-        $data = [
-            'judul' => 'Tambah User',
-            'kelas' => $kelas
-        ];
-
-        return view('user-management-create', $data);
+        return view('create-user', compact('kelas'));
     }
 
+    
     public function store(Request $request)
     {
-        $this->userModel->create([
-            'name' => $request->input('nama'),
-            'npm' => $request->input('npm'),
-            'kelas_id' => $request->input('kelas_id')
+        $request->validate([
+            'name' => 'required',
+            'npm' => 'required',
+            'kelas_id' => 'required'
         ]);
+
+        $this->userModel->create([
+            'name' => $request->name, // ⬅️ ini diperbaiki
+            'npm' => $request->npm,
+            'kelas_id' => $request->kelas_id
+        ]);
+
+        return redirect()->route('user-management.index');
+    }
+
+    
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'name' => 'required',
+            'npm' => 'required',
+            'kelas_id' => 'required'
+        ]);
+
+        $user = UserModel::findOrFail($id);
+
+        $user->update([
+            'name' => $request->name,
+            'npm' => $request->npm,
+            'kelas_id' => $request->kelas_id
+        ]);
+
+        return redirect()->route('user-management.index');
+    }
+
+    
+    public function destroy($id)
+    {
+        $user = UserModel::findOrFail($id);
+        $user->delete();
 
         return redirect()->route('user-management.index');
     }
