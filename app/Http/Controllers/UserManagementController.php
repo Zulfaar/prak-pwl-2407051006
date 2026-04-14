@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Kelas;
 use App\Models\UserModel;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class UserManagementController extends Controller
 {
@@ -17,74 +19,97 @@ class UserManagementController extends Controller
         $this->kelasModel = new Kelas();
     }
 
-    // READ
     public function index(Request $request)
-{
-    $search = $request->search;
+    {
+        $search = $request->search;
 
-    $users = \App\Models\UserModel::join('kelas', 'kelas.id', '=', 'user.kelas_id')
-        ->when($search, function ($query) use ($search) {
-            $query->where('name', 'like', "%$search%")
-                  ->orWhere('npm', 'like', "%$search%");
-        })
-        ->select('user.*', 'kelas.nama_kelas')
-        ->paginate(5);
+        $users = UserModel::join('kelas', 'kelas.id', '=', 'user.kelas_id')
+            ->when($search, function ($query) use ($search) {
+                $query->where('name', 'like', "%$search%")
+                      ->orWhere('npm', 'like', "%$search%");
+            })
+            ->select('user.*', 'kelas.nama_kelas')
+            ->paginate(5);
 
-    $kelas = \App\Models\Kelas::all();
+        $kelas = Kelas::all();
 
-    return view('user-management', compact('users', 'kelas'));
-}
-    
+        return view('user-management', compact('users', 'kelas'));
+    }
+
     public function create()
     {
         $kelas = $this->kelasModel->getKelas();
         return view('create-user', compact('kelas'));
     }
 
-    
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required',
-            'npm' => 'required',
-            'kelas_id' => 'required'
-        ]);
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'npm' => 'required|string|max:255',
+                'kelas_id' => 'required|exists:kelas,id'
+            ]);
 
-        $this->userModel->create([
-            'name' => $request->name, // ⬅️ ini diperbaiki
-            'npm' => $request->npm,
-            'kelas_id' => $request->kelas_id
-        ]);
+            $this->userModel->create($validated);
 
-        return redirect()->route('user-management.index');
+            Log::info('User created successfully');
+
+            return redirect()->route('user-management.index')
+                ->with('success', 'User berhasil dibuat');
+
+        } catch (\Exception $e) {
+
+            Log::error('User creation failed: ' . $e->getMessage());
+
+            return redirect()->route('user-management.index')
+                ->with('error', 'User gagal dibuat');
+        }
     }
 
-    
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'name' => 'required',
-            'npm' => 'required',
-            'kelas_id' => 'required'
-        ]);
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'npm' => 'required|string|max:255',
+                'kelas_id' => 'required|exists:kelas,id'
+            ]);
 
-        $user = UserModel::findOrFail($id);
+            DB::transaction(function () use ($id, $validated) {
+                $user = UserModel::findOrFail($id);
+                $user->update($validated);
+            });
 
-        $user->update([
-            'name' => $request->name,
-            'npm' => $request->npm,
-            'kelas_id' => $request->kelas_id
-        ]);
+            return redirect()->route('user-management.index')
+                ->with('success', 'User berhasil diupdate');
 
-        return redirect()->route('user-management.index');
+        } catch (\Exception $e) {
+
+            Log::error('User update failed: ' . $e->getMessage());
+
+            return redirect()->route('user-management.index')
+                ->with('error', 'User gagal diupdate');
+        }
     }
 
-    
     public function destroy($id)
     {
-        $user = UserModel::findOrFail($id);
-        $user->delete();
+        try {
+            DB::transaction(function () use ($id) {
+                $user = UserModel::findOrFail($id);
+                $user->delete();
+            });
 
-        return redirect()->route('user-management.index');
+            return redirect()->route('user-management.index')
+                ->with('success', 'User berhasil dihapus');
+
+        } catch (\Exception $e) {
+
+            Log::error('User delete failed: ' . $e->getMessage());
+
+            return redirect()->route('user-management.index')
+                ->with('error', 'User gagal dihapus');
+        }
     }
 }
